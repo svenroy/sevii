@@ -7,7 +7,7 @@ runtime = "node"
 
 [dependencies]
 gleam_stdlib = ">= 0.34.0 and < 2.0.0"
-gleam_aws_node = { path = "../gleam_aws_node" }
+gleam_aws_node = { path = "./modules/gleam_aws_node" }
 conversation = ">= 1.4.3 and < 2.0.0"
 glen = ">= 2.2.0 and < 3.0.0"
 gleam_http = ">= 3.6.0 and < 4.0.0"
