@@ -3,7 +3,6 @@ import api_gateway.{
   ApiGatewayEventRequestContext,
 }
 import conversation
-import gleam/bool
 import gleam/dict
 import gleam/http
 import gleam/http/request
@@ -15,20 +14,14 @@ import gleam/option
 import gleam/result
 import gleam/string
 import glen.{type Request, type Response, Text}
-import glen/status
 
 pub fn handler(handle_req: glen.Handler) {
   fn(event: Json, _context: Json) -> Promise(Json) {
     let api_gateway_event_result = api_gateway.decode_event(event)
 
-    use <- bool.guard(
-      when: result.is_error(api_gateway_event_result),
-      return: api_gateway.new_response(status.internal_server_error)
-        |> api_gateway.encode_response
-        |> promise.resolve,
-    )
-
+    // panic if it cannot decode an APIGatewayEvent
     let assert Ok(api_gateway_event) = api_gateway_event_result
+
     let request = api_gateway_event_to_glen_request(api_gateway_event)
     use response <- promise.await(handle_req(request))
 
