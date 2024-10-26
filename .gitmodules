@@ -1,3 +1,0 @@
-[submodule "modules/gleam_aws_node"]
-	path = modules/gleam_aws_node
-	url = https://github.com/svenroy/gleam_aws_node.git

@@ -14,14 +14,14 @@ packages = [
   { name = "gleeunit", version = "1.2.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleeunit", source = "hex", outer_checksum = "F7A7228925D3EE7D0813C922E062BFD6D7E9310F0BEE585D3A42F3307E3CFD13" },
   { name = "glen", version = "2.2.0", build_tools = ["gleam"], requirements = ["conversation", "filepath", "gleam_community_ansi", "gleam_http", "gleam_javascript", "gleam_stdlib", "marceau"], otp_app = "glen", source = "hex", outer_checksum = "0100D9B9EFF0B4A188AC354CE708DBD38CBE581C98A77E88CC8CA242002D6CE0" },
   { name = "marceau", version = "1.3.0", build_tools = ["gleam"], requirements = [], otp_app = "marceau", source = "hex", outer_checksum = "2D1C27504BEF45005F5DFB18591F8610FB4BFA91744878210BDC464412EC44E9" },
+  { name = "sevii", version = "1.0.0", build_tools = ["gleam"], requirements = ["conversation", "glambda", "gleam_http", "gleam_javascript", "gleam_json", "gleam_stdlib", "glen"], source = "local", path = "../.." },
 ]
 
 [requirements]
-conversation = { version = ">= 1.4.3 and < 2.0.0" }
-glambda = { version = ">= 0.1.0 and < 1.0.0" }
-gleam_http = { version = ">= 3.6.0 and < 4.0.0" }
-gleam_javascript = { version = ">= 0.12.0 and < 1.0.0" }
+gleam_http = { version = ">= 3.7.0 and < 4.0.0" }
+gleam_javascript = { version = ">= 0.13.0 and < 1.0.0" }
 gleam_json = { version = ">= 2.0.0 and < 3.0.0" }
 gleam_stdlib = { version = ">= 0.34.0 and < 2.0.0" }
 gleeunit = { version = ">= 1.0.0 and < 2.0.0" }
 glen = { version = ">= 2.2.0 and < 3.0.0" }
+sevii = { path = "../.." }

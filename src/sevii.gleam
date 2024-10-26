@@ -1,109 +1,38 @@
-import api_gateway.{
-  type ApiGatewayEvent, type ApiGatewayResponse, ApiGatewayEvent,
-  ApiGatewayEventRequestContext,
+import conversation.{type JsRequest}
+import glambda
+import gleam/http/request.{type Request as HttpRequest}
+import gleam/http/response.{
+  type Response as HttpResponse, Response as HttpResponse,
 }
-import conversation
-import gleam/dict
-import gleam/http
-import gleam/http/request
-import gleam/io
 import gleam/javascript/promise.{type Promise}
-import gleam/json.{type Json}
-import gleam/list
-import gleam/option
-import gleam/result
-import gleam/string
-import glen.{type Request, type Response, Text}
+import gleam/option.{type Option, None, Some}
+import glen
 
-pub fn handler(handle_req: glen.Handler) {
-  fn(event: Json, _context: Json) -> Promise(Json) {
-    let api_gateway_event_result = api_gateway.decode_event(event)
+pub fn http_handler(handler: glen.Handler) {
+  handler |> handle_request |> glambda.http_handler
+}
 
-    // panic if it cannot decode an APIGatewayEvent
-    let assert Ok(api_gateway_event) = api_gateway_event_result
+fn handle_request(handler: glen.Handler) {
+  fn(req: HttpRequest(Option(String)), _ctx: glambda.Context) -> Promise(
+    HttpResponse(Option(String)),
+  ) {
+    let glen_response = req |> to_js_request |> glen.convert_request |> handler
 
-    let request = api_gateway_event_to_glen_request(api_gateway_event)
-    use response <- promise.await(handle_req(request))
+    use glen_response <- promise.await(glen_response)
 
-    response
-    |> glen_response_to_api_gateway_response
-    |> api_gateway.encode_response
+    let body = case glen_response.body {
+      glen.Text(s) | glen.File(s) -> Some(s)
+      _ -> None
+    }
+
+    HttpResponse(
+      body:,
+      status: glen_response.status,
+      headers: glen_response.headers,
+    )
     |> promise.resolve
   }
 }
 
-fn api_gateway_event_to_glen_request(
-  api_gateway_event: ApiGatewayEvent,
-) -> Request {
-  let assert Ok(method) = http.parse_method(api_gateway_event.http_method)
-  let js_request_from_body = js_request(build_url(api_gateway_event), _)
-
-  let req =
-    api_gateway_event.body
-    |> option.unwrap("")
-    |> js_request_from_body
-    |> glen.convert_request
-    |> request.set_method(method)
-
-  api_gateway_event.headers
-  |> dict.to_list
-  |> list.fold(req, fn(acc, header) {
-    acc |> request.set_header(header.0, header.1)
-  })
-}
-
-fn build_url(api_gateway_event: ApiGatewayEvent) -> String {
-  let ApiGatewayEvent(headers:, request_context:, query_string_parameters:, ..) =
-    api_gateway_event
-  let ApiGatewayEventRequestContext(domain_name:, path:) = request_context
-
-  let protocol =
-    headers
-    |> dict_get_case_insensitive("X-Forwarded-Proto")
-    |> result.unwrap("https")
-
-  let query_string = option.unwrap(query_string_parameters, "")
-
-  protocol <> "://" <> domain_name <> path <> query_string
-}
-
-fn glen_response_to_api_gateway_response(
-  response: Response,
-) -> ApiGatewayResponse {
-  let res = api_gateway.new_response(response.status)
-
-  let res = {
-    case response.body {
-      Text(body) -> res |> api_gateway.set_body(body)
-      _ -> res
-    }
-  }
-
-  response.headers
-  |> list.fold(res, fn(acc, header) {
-    acc |> api_gateway.set_header(header.0, header.1)
-  })
-}
-
-// UTILS ----------
-
-fn dict_get_case_insensitive(
-  from: dict.Dict(String, value),
-  key: String,
-) -> Result(value, Nil) {
-  let to = dict.new()
-
-  from
-  |> dict.each(fn(key, value) { dict.insert(to, string.lowercase(key), value) })
-
-  dict.get(to, string.lowercase(key))
-}
-
-// FFIs ----------
-
-@external(javascript, "./sevii_ffi.mjs", "new_request")
-fn js_request(url: String, body: String) -> conversation.JsRequest
-
-pub fn main() {
-  io.println("Hello from sevii!")
-}
+@external(javascript, "./ffi.mjs", "toJsRequest")
+fn to_js_request(req: HttpRequest(Option(String))) -> JsRequest
